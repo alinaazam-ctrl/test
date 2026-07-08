@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HealthTrack</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+<style>
+  :root{
+    --primary:#00796B; --primary-dark:#004D40; --primary-light:#E1F5EE; --primary-mid:#4FB8A5;
+    --success-bg:#EAF3DE; --success-text:#27500A;
+    --warning-bg:#FAEEDA; --warning-text:#B54708;
+    --error-bg:#FCEBEB; --error-text:#791F1F; --error:#C62828;
+    --info-bg:#E6F1FB; --info-text:#01579B;
+    --text-primary:#212121; --text-secondary:#616161; --text-muted:#888780;
+    --bg:#FFFFFF; --card-bg:#F1EFE8; --border:#B4B2A9;
+    --nav-bg:#F1EFE8;
+  }
+  [data-theme="dark"]{
+    --primary:#4FB8A5; --primary-dark:#80CBC4; --primary-light:#04342C; --primary-mid:#4FB8A5;
+    --success-bg:#173404; --success-text:#97C459;
+    --warning-bg:#412402; --warning-text:#FAC775;
+    --error-bg:#501313; --error-text:#F09595; --error:#EF5350;
+    --info-bg:#042C53; --info-text:#85B7EB;
+    --text-primary:#E0E0E0; --text-secondary:#BDBDBD; --text-muted:#888780;
+    --bg:#121212; --card-bg:#1E1E1E; --border:#444441;
+    --nav-bg:#1A1A1A;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg); color:var(--text-primary);
+    min-height:100vh; transition:background .2s, color .2s;
+  }
+  .app-shell{max-width:1200px; margin:0 auto; padding:16px;}
+  .top-bar{display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;}
+  .brand{font-size:18px; font-weight:600; color:var(--primary);}
+  .theme-toggle{
+    height:40px; padding:0 14px; border-radius:10px; border:1px solid var(--border);
+    background:var(--card-bg); color:var(--text-primary); font-size:13px; cursor:pointer;
+    display:flex; align-items:center; gap:6px;
+  }
+  .theme-toggle:focus-visible, button:focus-visible, input:focus-visible, a:focus-visible{
+    outline:2px solid var(--info-text); outline-offset:2px;
+  }
+
+  /* ---------- Onboarding ---------- */
+  .onboarding{
+    max-width:340px; margin:40px auto; background:var(--bg); border:1px solid var(--border);
+    border-radius:28px; padding:40px 24px; text-align:center;
+  }
+  .onboarding-icon{
+    width:64px; height:64px; border-radius:50%; background:var(--primary-light);
+    display:flex; align-items:center; justify-content:center; margin:0 auto 20px;
+  }
+  .onboarding-icon i{font-size:28px; color:var(--primary-dark);}
+  .onboarding h1{font-size:22px; font-weight:600; color:var(--primary-dark); margin-bottom:12px; line-height:1.3;}
+  .onboarding p{font-size:14px; color:var(--text-secondary); line-height:1.6; margin-bottom:24px;}
+  .btn-primary{
+    width:100%; height:52px; border-radius:12px; border:none; background:var(--primary);
+    color:#FFFFFF; font-size:16px; font-weight:600; cursor:pointer;
+  }
+  [data-theme="dark"] .btn-primary{color:#04342C;}
+  .btn-primary:hover{opacity:.92;}
+  .skip-link-onboard{
+    margin-top:16px; font-size:14px; color:var(--primary); background:none; border:none; cursor:pointer; padding:12px;
+  }
+
+  /* ---------- App layout ---------- */
+  .app{display:none;}
+  .app.active{display:block;}
+  .layout{display:flex; gap:20px;}
+
+  /* Sidebar (desktop) */
+  .sidebar{
+    width:180px; background:var(--nav-bg); border-radius:16px; padding:16px 0; flex-shrink:0;
+    display:none; flex-direction:column; gap:2px; height:fit-content;
+  }
+  .sidebar .brand{padding:0 18px 16px; font-size:16px;}
+  .nav-item{
+    display:flex; align-items:center; gap:10px; padding:12px 18px; border-left:3px solid transparent;
+    color:var(--text-secondary); text-decoration:none; font-size:14px; cursor:pointer; background:none; border-top:none; border-right:none; border-bottom:none; width:100%; text-align:left;
+  }
+  .nav-item i{font-size:18px;}
+  .nav-item.active{border-left-color:var(--primary); background:var(--primary-light); color:var(--primary-dark); font-weight:600;}
+  .skip-link{
+    position:absolute; left:-999px; top:0; background:var(--primary); color:#fff; padding:10px 16px;
+    border-radius:8px; font-size:13px; z-index:100;
+  }
+  .skip-link:focus{left:16px; top:16px;}
+
+  .main-content{flex:1; min-width:0;}
+  .view{display:none;}
+  .view.active{display:block;}
+  h2.page-title{font-size:20px; font-weight:600; margin-bottom:16px;}
+  h3.section-title{font-size:14px; font-weight:600; color:var(--text-secondary); margin:16px 0 10px;}
+
+  /* Stat cards */
+  .stat-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:12px;}
+  .stat-card{background:var(--card-bg); border-radius:12px; padding:14px;}
+  .stat-value{font-size:28px; font-weight:600; color:var(--primary-dark);}
+  .stat-value.info{color:var(--info-text);}
+  .stat-value.warn{color:var(--warning-text);}
+  .stat-label{font-size:12px; color:var(--text-secondary); margin-top:2px;}
+
+  /* Progress */
+  .progress-wrap{margin:16px 0;}
+  .progress-labels{display:flex; justify-content:space-between; font-size:13px; color:var(--text-secondary); margin-bottom:6px;}
+  .progress-labels strong{color:var(--text-primary);}
+  .progress-track{height:10px; background:var(--primary-light); border-radius:6px; overflow:hidden;}
+  .progress-fill{height:100%; width:70%; background:var(--primary); border-radius:6px;}
+
+  .quick-actions{display:flex; gap:10px; margin-top:16px;}
+  .action-btn{
+    flex:1; height:44px; border-radius:12px; border:1px solid var(--border); background:var(--bg);
+    color:var(--text-primary); font-size:13px; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer;
+  }
+  .action-btn:hover{background:var(--card-bg);}
+
+  /* Bottom nav (mobile) */
+  .bottom-nav{
+    position:fixed; bottom:0; left:0; right:0; background:var(--nav-bg); border-top:1px solid var(--border);
+    display:flex; justify-content:space-around; padding:8px 0 10px; z-index:50;
+  }
+  .bottom-nav-item{
+    display:flex; flex-direction:column; align-items:center; gap:2px; background:none; border:none; cursor:pointer;
+    color:var(--text-secondary); font-size:11px; min-width:60px; padding:6px;
+  }
+  .bottom-nav-item i{font-size:20px;}
+  .bottom-nav-item.active{color:var(--primary); font-weight:600;}
+
+  /* Form */
+  .field-group{margin-bottom:16px;}
+  .field-group label{display:block; font-size:13px; font-weight:600; margin-bottom:6px;}
+  .required-legend{font-size:12px; color:var(--text-secondary); margin-bottom:14px;}
+  input[type="text"], input[type="number"], input[type="date"]{
+    width:100%; height:44px; border-radius:10px; border:1.5px solid var(--border); padding:0 12px;
+    font-size:14px; background:var(--bg); color:var(--text-primary);
+  }
+  input:focus{outline:2px solid var(--info-text); outline-offset:1px;}
+  input.error-field{border-color:var(--error);}
+  .error-msg{display:flex; align-items:center; gap:6px; margin-top:6px; font-size:12px; color:var(--error-text);}
+  .slider-row{display:flex; justify-content:space-between; margin-bottom:6px; font-size:13px;}
+  .slider-row strong{color:var(--primary);}
+  input[type="range"]{width:100%;}
+  .error-summary{background:var(--error-bg); border:1px solid var(--error); border-radius:10px; padding:12px; margin-bottom:16px; display:none;}
+  .error-summary.show{display:block;}
+  .error-summary-title{font-size:13px; font-weight:600; color:var(--error-text); margin-bottom:6px;}
+  .error-summary li{font-size:12px; color:var(--error-text); margin-left:16px;}
+  .form-grid{display:grid; grid-template-columns:1fr; gap:16px;}
+  @media(min-width:640px){ .form-grid{grid-template-columns:1fr 1fr;} }
+
+  .toast-banner{
+    display:flex; align-items:center; gap:8px; background:var(--success-bg); color:var(--success-text);
+    border-radius:10px; padding:10px 12px; font-size:13px; margin-top:16px;
+  }
+
+  /* Chart */
+  .chart-bars{display:flex; align-items:flex-end; gap:8px; height:140px; padding:0 4px; margin:16px 0;}
+  .bar-col{flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;}
+  .bar{width:100%; border-radius:4px 4px 0 0; background:var(--primary);}
+  .bar.below{background:repeating-linear-gradient(45deg, var(--primary-light), var(--primary-light) 3px, var(--primary-mid) 3px, var(--primary-mid) 6px);}
+  .bar-day{font-size:11px; color:var(--text-secondary);}
+  .legend{display:flex; gap:16px; font-size:12px; color:var(--text-secondary); margin-bottom:12px;}
+  .legend-swatch{width:12px; height:12px; border-radius:2px; display:inline-block; margin-right:5px; vertical-align:middle;}
+  .chart-summary{background:var(--card-bg); border-radius:10px; padding:12px; font-size:13px; line-height:1.5;}
+
+  /* Report table */
+  table{width:100%; border-collapse:collapse; font-size:13px; margin-top:12px;}
+  th{text-align:left; padding:8px; background:var(--card-bg); font-weight:600;}
+  th.num, td.num{text-align:right;}
+  td{padding:8px; border-top:1px solid var(--border);}
+
+  /* Alerts component showcase */
+  .alert{display:flex; align-items:center; gap:8px; border-radius:10px; padding:10px 12px; font-size:13px; margin-bottom:10px;}
+  .alert i{font-size:16px;}
+  .alert.success{background:var(--success-bg); color:var(--success-text);}
+  .alert.warning{background:var(--warning-bg); color:var(--warning-text);}
+  .alert.error{background:var(--error-bg); color:var(--error-text);}
+  .alert.info{background:var(--info-bg); color:var(--info-text);}
+  .dismiss-btn{margin-left:auto; width:32px; height:32px; border:none; background:none; cursor:pointer; color:inherit;}
+
+  /* Responsive: desktop layout swaps sidebar in, hides bottom nav */
+  @media(min-width:768px){
+    .sidebar{display:flex;}
+    .bottom-nav{display:none;}
+    .main-content{padding-bottom:0;}
+    body{padding-bottom:0;}
+  }
+  @media(max-width:767px){
+    .main-content{padding-bottom:80px;}
+  }
+  .sr-only{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0);}
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+  <div class="top-bar">
+    <span class="brand" id="topBrand">HealthTrack</span>
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+      <i class="ti ti-moon" id="themeIcon" aria-hidden="true"></i>
+      <span id="themeLabel">Dark mode</span>
+    </button>
+  </div>
+
+  <!-- ONBOARDING -->
+  <div class="onboarding" id="onboardingScreen">
+    <div class="onboarding-icon"><i class="ti ti-heartbeat" aria-hidden="true"></i></div>
+    <h1>Track your health,<br>your way</h1>
+    <p>Log steps, water, sleep and mood, all in one calm place.</p>
+    <button class="btn-primary" id="getStartedBtn">Get started</button>
+    <button class="skip-link-onboard" id="skipBtn">Skip for now</button>
+  </div>
+
+  <!-- MAIN APP -->
+  <div class="app" id="mainApp">
+    <a href="#mainContent" class="skip-link">Skip to main content</a>
+    <div class="layout">
+
+      <nav class="sidebar" aria-label="Main navigation">
+        <span class="brand">HealthTrack</span>
+        <button class="nav-item active" data-view="dashboard"><i class="ti ti-home" aria-hidden="true"></i>Home</button>
+        <button class="nav-item" data-view="log"><i class="ti ti-clipboard-list" aria-hidden="true"></i>Log</button>
+        <button class="nav-item" data-view="chart"><i class="ti ti-chart-bar" aria-hidden="true"></i>Chart</button>
+        <button class="nav-item" data-view="report"><i class="ti ti-file-text" aria-hidden="true"></i>Report</button>
+        <button class="nav-item" data-view="components"><i class="ti ti-components" aria-hidden="true"></i>Components</button>
+      </nav>
+
+      <main class="main-content" id="mainContent">
+
+        <!-- DASHBOARD -->
+        <section class="view active" id="view-dashboard" aria-labelledby="dashTitle">
+          <h2 class="page-title" id="dashTitle">Good morning, Sara</h2>
+          <div class="stat-grid">
+            <div class="stat-card"><div class="stat-value">7,340</div><div class="stat-label">Steps today</div></div>
+            <div class="stat-card"><div class="stat-value info">6</div><div class="stat-label">Glasses of water</div></div>
+            <div class="stat-card"><div class="stat-value">7h 20m</div><div class="stat-label">Sleep last night</div></div>
+            <div class="stat-card"><div class="stat-value warn">Good</div><div class="stat-label">Mood today</div></div>
+          </div>
+          <div class="progress-wrap">
+            <div class="progress-labels"><span>Daily step goal</span><strong>70%</strong></div>
+            <div class="progress-track"><div class="progress-fill"></div></div>
+          </div>
+          <div class="quick-actions">
+            <button class="action-btn"><i class="ti ti-droplet" aria-hidden="true"></i>Log water</button>
+            <button class="action-btn"><i class="ti ti-mood-smile" aria-hidden="true"></i>Log mood</button>
+          </div>
+        </section>
+
+        <!-- LOG / FORM -->
+        <section class="view" id="view-log" aria-labelledby="logTitle">
+          <h2 class="page-title" id="logTitle">Log today</h2>
+          <div class="error-summary" id="errorSummary" role="alert">
+            <div class="error-summary-title">There are 2 errors in this form</div>
+            <ul>
+              <li>Water intake: enter a number</li>
+              <li>Date: enter a valid date</li>
+            </ul>
+          </div>
+          <p class="required-legend">Fields marked * are required</p>
+          <div class="form-grid">
+            <div class="field-group">
+              <label for="waterInput">Water intake (glasses) *</label>
+              <input type="number" id="waterInput" class="error-field" aria-describedby="waterError">
+              <div class="error-msg" id="waterError"><i class="ti ti-alert-circle" aria-hidden="true"></i>Enter a number between 0–20</div>
+            </div>
+            <div class="field-group">
+              <label for="dateInput">Date *</label>
+              <input type="date" id="dateInput" class="error-field" aria-describedby="dateError">
+              <div class="error-msg" id="dateError"><i class="ti ti-alert-circle" aria-hidden="true"></i>Enter a valid date</div>
+            </div>
+            <div class="field-group">
+              <label for="sleepInput">Sleep hours</label>
+              <input type="number" id="sleepInput" value="7.5">
+            </div>
+            <div class="field-group">
+              <label for="moodSlider">Mood today</label>
+              <div class="slider-row"><span>How are you feeling?</span><strong id="moodOut">7 / 10</strong></div>
+              <input type="range" id="moodSlider" min="0" max="10" value="7">
+            </div>
+          </div>
+          <button class="btn-primary" id="saveBtn" style="margin-top:8px;">Save entry</button>
+          <div class="toast-banner" id="savedToast" style="display:none;">
+            <i class="ti ti-circle-check" aria-hidden="true"></i>Saved successfully
+          </div>
+        </section>
+
+        <!-- CHART -->
+        <section class="view" id="view-chart" aria-labelledby="chartTitle">
+          <h2 class="page-title" id="chartTitle">Steps this week</h2>
+          <div class="legend">
+            <span><span class="legend-swatch" style="background:var(--primary);"></span>This week</span>
+            <span><span class="legend-swatch" style="background:repeating-linear-gradient(45deg, var(--primary-light), var(--primary-light) 2px, var(--primary-mid) 2px, var(--primary-mid) 4px);"></span>Below goal</span>
+          </div>
+          <div class="chart-bars" role="img" aria-label="Bar chart of steps per day this week">
+            <div class="bar-col"><div class="bar below" style="height:70px;"></div><span class="bar-day">Mon</span></div>
+            <div class="bar-col"><div class="bar" style="height:90px;"></div><span class="bar-day">Tue</span></div>
+            <div class="bar-col"><div class="bar" style="height:60px;"></div><span class="bar-day">Wed</span></div>
+            <div class="bar-col"><div class="bar" style="height:100px;"></div><span class="bar-day">Thu</span></div>
+            <div class="bar-col"><div class="bar" style="height:75px;"></div><span class="bar-day">Fri</span></div>
+            <div class="bar-col"><div class="bar" style="height:110px;"></div><span class="bar-day">Sat</span></div>
+            <div class="bar-col"><div class="bar" style="height:85px;"></div><span class="bar-day">Sun</span></div>
+          </div>
+          <div class="chart-summary">Your average steps this week were 7,340 — up 12% from last week.</div>
+        </section>
+
+        <!-- REPORT -->
+        <section class="view" id="view-report" aria-labelledby="reportTitle">
+          <h2 class="page-title" id="reportTitle">Weekly report — Sara Ahmed</h2>
+          <p style="font-size:12px; color:var(--text-secondary);">July 3 – July 9, 2026</p>
+          <table>
+            <caption class="sr-only">Steps and sleep by day, July 3 to July 9 2026</caption>
+            <thead>
+              <tr><th scope="col">Date</th><th scope="col" class="num">Steps</th><th scope="col" class="num">Sleep</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Mon</td><td class="num">6,100</td><td class="num">7.1h</td></tr>
+              <tr><td>Tue</td><td class="num">7,900</td><td class="num">6.8h</td></tr>
+              <tr><td>Wed</td><td class="num">5,300</td><td class="num">7.4h</td></tr>
+              <tr><td>Thu</td><td class="num">8,700</td><td class="num">7.0h</td></tr>
+            </tbody>
+          </table>
+          <p style="font-size:11px; color:var(--text-muted); margin-top:16px; border-top:1px solid var(--border); padding-top:10px;">
+            Exported as a tagged PDF — heading and table structure preserved for screen readers.
+          </p>
+        </section>
+
+        <!-- COMPONENTS SHOWCASE -->
+        <section class="view" id="view-components" aria-labelledby="compTitle">
+          <h2 class="page-title" id="compTitle">Component library</h2>
+          <h3 class="section-title">Alerts</h3>
+          <div class="alert success"><i class="ti ti-circle-check" aria-hidden="true"></i>Entry saved successfully</div>
+          <div class="alert warning"><i class="ti ti-alert-triangle" aria-hidden="true"></i>Your sleep goal hasn't been set yet</div>
+          <div class="alert error"><i class="ti ti-alert-circle" aria-hidden="true"></i>Couldn't save entry. Check your connection
+            <button class="dismiss-btn" aria-label="Dismiss error alert"><i class="ti ti-x" aria-hidden="true"></i></button>
+          </div>
+          <div class="alert info"><i class="ti ti-info-circle" aria-hidden="true"></i>New wellness articles added this week</div>
+
+          <h3 class="section-title">Buttons</h3>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+            <button class="btn-primary" style="width:auto; padding:0 20px;">Primary</button>
+            <button style="height:44px; padding:0 16px; border-radius:10px; background:transparent; border:1.5px solid var(--primary); color:var(--primary); font-size:13px;">Secondary</button>
+            <button style="height:44px; padding:0 16px; border-radius:10px; background:var(--error); border:none; color:#fff; font-size:13px;">Delete entry</button>
+            <button aria-label="Delete entry" style="width:44px; height:44px; border-radius:10px; background:var(--error-bg); border:none; color:var(--error-text); display:flex; align-items:center; justify-content:center;"><i class="ti ti-trash" aria-hidden="true"></i></button>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV (mobile) -->
+  <nav class="bottom-nav" id="bottomNav" aria-label="Main navigation" style="display:none;">
+    <button class="bottom-nav-item active" data-view="dashboard"><i class="ti ti-home" aria-hidden="true"></i>Home</button>
+    <button class="bottom-nav-item" data-view="log"><i class="ti ti-clipboard-list" aria-hidden="true"></i>Log</button>
+    <button class="bottom-nav-item" data-view="chart"><i class="ti ti-chart-bar" aria-hidden="true"></i>Chart</button>
+    <button class="bottom-nav-item" data-view="components"><i class="ti ti-components" aria-hidden="true"></i>More</button>
+  </nav>
+</div>
+
+<script>
+  // Theme toggle
+  const themeToggle = document.getElementById('themeToggle');
+  const themeIcon = document.getElementById('themeIcon');
+  const themeLabel = document.getElementById('themeLabel');
+  themeToggle.addEventListener('click', () => {
+    const html = document.documentElement;
+    const isDark = html.getAttribute('data-theme') === 'dark';
+    html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    themeIcon.className = isDark ? 'ti ti-moon' : 'ti ti-sun';
+    themeLabel.textContent = isDark ? 'Dark mode' : 'Light mode';
+  });
+
+  // Onboarding -> app
+  function enterApp(){
+    document.getElementById('onboardingScreen').style.display = 'none';
+    document.getElementById('mainApp').classList.add('active');
+    document.getElementById('bottomNav').style.display = window.innerWidth < 768 ? 'flex' : 'none';
+  }
+  document.getElementById('getStartedBtn').addEventListener('click', enterApp);
+  document.getElementById('skipBtn').addEventListener('click', enterApp);
+
+  window.addEventListener('resize', () => {
+    if(document.getElementById('mainApp').classList.contains('active')){
+      document.getElementById('bottomNav').style.display = window.innerWidth < 768 ? 'flex' : 'none';
+    }
+  });
+
+  // View switching
+  function showView(name){
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    const target = document.getElementById('view-' + name);
+    if(target) target.classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.view === name));
+    document.querySelectorAll('.bottom-nav-item').forEach(b => b.classList.toggle('active', b.dataset.view === name));
+  }
+  document.querySelectorAll('.nav-item, .bottom-nav-item').forEach(btn => {
+    btn.addEventListener('click', () => showView(btn.dataset.view));
+  });
+
+  // Mood slider live readout
+  const moodSlider = document.getElementById('moodSlider');
+  const moodOut = document.getElementById('moodOut');
+  moodSlider.addEventListener('input', () => { moodOut.textContent = moodSlider.value + ' / 10'; });
+
+  // Form: show error summary until fields are filled, then show toast on save
+  document.getElementById('errorSummary').classList.add('show');
+  document.getElementById('saveBtn').addEventListener('click', () => {
+    const water = document.getElementById('waterInput');
+    const date = document.getElementById('dateInput');
+    if(water.value && date.value){
+      document.getElementById('errorSummary').classList.remove('show');
+      water.classList.remove('error-field');
+      date.classList.remove('error-field');
+      document.getElementById('waterError').style.display='none';
+      document.getElementById('dateError').style.display='none';
+      const toast = document.getElementById('savedToast');
+      toast.style.display = 'flex';
+      setTimeout(() => { toast.style.display = 'none'; }, 4000);
+    }
+  });
+
+  // Dismiss alert
+  document.querySelectorAll('.dismiss-btn').forEach(btn => {
+    btn.addEventListener('click', () => { btn.closest('.alert').style.display = 'none'; });
+  });
+</script>
+
+</body>
+</html>
